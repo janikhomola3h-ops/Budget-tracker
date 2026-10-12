@@ -24,8 +24,10 @@ class Database:
         self.conn.commit()
         c.close()
 
-    def withdraw(self):
-        ...
+    def month_budget(self, month_budget=500, start_d, end_d ):
+        c = self.conn.cursor()
+        c.execute("SELECT SUM(amount) FROM budget_tracker WHERE date >= ? AND date <= ?"), (start_d, end_d)
+        spend = c.fetchall()
     def budget_left(self):
         ...
     def passive_income(self):
