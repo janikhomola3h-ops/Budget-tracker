@@ -37,10 +37,17 @@ class Database:
         else:
             self.limit_result = "You have some money lefts in this term..."
     def today_date(self): #Getting today date and sending it in to Database class
-        full_date = str(date.today())
-        year, month, self.day = full_date.split("-")
-    def passive_income(self):
-        ...
+        self.full_date = str(date.today())
+        self.year, self.month, self.day = self.full_date.split("-")
+    def passive_income(self, start_d, end_d, def_month_budget = 500): #Adding automaticaly income every month
+        self.today_date()
+        c = self.conn.cursor()
+        c.execute("""SELECT COUNT (*) FROM budget_tracker WHERE date >= ? AND date <= ?""", (start_d, end_d))
+        count = c.fetchone()[0]
+
+        if count == 0:
+            c.execute("""INSERT INTO budget_tracker (date, amount, category, description) VALUES(?,?,?,?)""", (self.full_date, 500, "System", "Automatic income"))
+            self.conn.commit()
 
 def main():
     conn = sqlite3.connect("budget_tracker.db")
