@@ -3,7 +3,7 @@ import os
 import sys
 import sqlite3
 from PySide6 import QtWidgets
-from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QWidget, QVBoxLayout, QPushButton
+from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QWidget, QVBoxLayout, QPushButton, QStackedWidget
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
 from datetime import date
@@ -63,13 +63,25 @@ class UI(QMainWindow):
         self.db = database
         self.diff = self.db.month_budget("2026-10-01", "2026-10-31")
         central = QWidget() # creating layout
+        self.pages = QStackedWidget() # Creating space for pages
         self.main_layout = QVBoxLayout(central)
-        self.setCentralWidget(central)
+        self.pages.addWidget(central) # Adding main page to the stack of pages
+        self.setCentralWidget(self.pages)
         self.left_budg_label()#Calling label function
         self.Trancaction_button = QPushButton("Add transaction") #Creating transaction button
         self.b_transaction()#Calling transaction button function
         self.History_button = QPushButton("Show history of transaction")#Creating transaction history button
         self.b_history() #Calling history button function
+
+        build_history()
+        #CONNECTING BUTTONS
+        self.History_button.clicked.connect(lambda: self.pages.setCurrentIndex(1))
+
+        def build_history(self):
+            self.history = QWidget()
+            self.history_layout = QVBoxLayout(self.history)
+            self.pages.addWidget(self.history)
+
 
         
 
