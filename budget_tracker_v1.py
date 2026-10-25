@@ -1,4 +1,3 @@
-import PyQt6
 import os
 import sys
 import sqlite3
@@ -73,14 +72,13 @@ class UI(QMainWindow):
         self.History_button = QPushButton("Show history of transaction")#Creating transaction history button
         self.b_history() #Calling history button function
 
-        build_history()
         #CONNECTING BUTTONS
         self.History_button.clicked.connect(lambda: self.pages.setCurrentIndex(1))
 
-        def build_history(self):
-            self.history = QWidget()
-            self.history_layout = QVBoxLayout(self.history)
-            self.pages.addWidget(self.history)
+    def build_history(self):
+        self.history = QWidget()
+        self.history_layout = QVBoxLayout(self.history)
+        self.pages.addWidget(self.history)
 
 
         
