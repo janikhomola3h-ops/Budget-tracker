@@ -5,21 +5,11 @@ from PySide6.QtCore import Qt
 import sys
 import os
 
-class Window(QMainWindow):
+class MainPage(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Budget tracker") #Title of the window
-
-        #Setting uo the icon of the window
-        basedir = os.path.dirname(os.path.abspath(__file__)) #getting ABS icon path
-        i_path = os.path.join(basedir, "money.png")
-        self.setWindowIcon(QIcon(i_path)) #showing icon of the app
-
         #Setting up main layout
-        self.layout = QVBoxLayout()
-        widget = QWidget()
-        widget.setLayout(self.layout)
-        self.setCentralWidget(widget)
+        layout = QVBoxLayout(self)
 
         #Setting up main text in the main window
         #if budget_left > 0:
@@ -35,21 +25,52 @@ class Window(QMainWindow):
         #Creating buttnon for history of transactions + connecting it to the action
         self.history_button = QPushButton("Show history of transaction")
 
-
-
-
-
         #Adding components to the layout
-        self.layout.addWidget(self.text_on_main_page)
-        self.layout.addWidget(self.add_transaction)
-        self.layout.addWidget(self.history_button)
-        
+        layout.addWidget(self.text_on_main_page)
+        layout.addWidget(self.add_transaction)
+        layout.addWidget(self.history_button)
+       
+class History(QWidget): #Class for history window
+    def __init__(self):
+        super().__init__()
+        #Layout
+        layout = QVBoxLayout(self)
+
+        self.test_text = QLabel("TEST")
+
+        #Adding componets to the layout
+        layout.addWidget(self.test_text)
+
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Budget tracker") #Title of the window
+
+        #Setting uo the icon of the window
+        basedir = os.path.dirname(os.path.abspath(__file__)) #getting ABS icon path
+        i_path = os.path.join(basedir, "money.png")
+        self.setWindowIcon(QIcon(i_path)) #showing icon of the app
+
+        #Setting up main page on start
+        self.main_page = MainPage()
+        self.history = History()
+
+        #Creating stack of the pages + adding pages
+        self.stack = QStackedWidget()
+        self.stack.addWidget(self.main_page)
+        self.stack.addWidget(self.history)
+        self.setCentralWidget(self.stack)
+
+
+
+            #Connecting pages
+        self.main_page.history_button.clicked.connect(lambda: self.stack.setCurrentIndex(1))
 
         
 
 def main():
     app = QApplication(sys.argv)
-    window = Window()
+    window = MainWindow()
     window.show()
     app.exec()
 
