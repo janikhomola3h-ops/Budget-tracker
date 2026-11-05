@@ -16,7 +16,7 @@ class Database(): #Database for tracker
         self.cur.execute("INSERT INTO budget_tracker (date, category, amount) VALUES (?, ?, ?)", (date,category,amount))
         self.con.commit()
 
-    def month_budget_left(self, start_date, end_date, month_budget = -500):
+    def month_budget_left(self, start_date, end_date, month_budget = 500):
         self.cur.execute("SELECT SUM(amount) FROM budget_tracker WHERE date BETWEEN ? AND ?", (start_date, end_date))
         spend = self.cur.fetchone()[0]
         if spend is None:
@@ -70,6 +70,7 @@ class History_window(QWidget): #Class for history window
 
         #Adding componets to the layout
         layout.addWidget(self.back_button)
+
 class Transaction_window(QWidget):
     def __init__(self):
         super().__init__()
@@ -77,36 +78,40 @@ class Transaction_window(QWidget):
         layout = QVBoxLayout(self)
 
         #Adding editing text bar for amount
-        amount_text_box = QTextEdit()
-        amount_text_box.setPlaceholderText("Enter amount (for income +; for withdraw -)")
+        self.amount_text_box = QTextEdit()
+        self.amount_text_box.setPlaceholderText("Enter amount (for income +; for withdraw -)")
         
 
         #Adding text bar for date
-        date_text_box = QTextEdit()
-        date_text_box.setPlaceholderText("Enter todays date in format M/D/Y")
+        self.date_text_box = QTextEdit()
+        self.date_text_box.setPlaceholderText("Enter todays date in format M/D/Y")
 
         #Adding text bar for description
-        descrition_text_box = QTextEdit()
-        descrition_text_box.setPlaceholderText("Enter a description")
+        self.descrition_text_box = QTextEdit()
+        self.descrition_text_box.setPlaceholderText("Enter a description")
 
         #Adding button for submiting the form
-        send_button = QPushButton("Add transaction")
+        self.send_button = QPushButton("Add transaction")
 
         #Button back to the home screen
         self.back_button = QPushButton("Back")
 
         #Adding componets to the layout
-        layout.addWidget(amount_text_box)
-        layout.addWidget(date_text_box)
-        layout.addWidget(descrition_text_box)
-        layout.addWidget(send_button)
+        layout.addWidget(self.amount_text_box)
+        layout.addWidget(self.date_text_box)
+        layout.addWidget(self.descrition_text_box)
+        layout.addWidget(self.send_button)
         layout.addWidget(self.back_button)
 class MainWindow(QMainWindow):
     def __init__(self, db):
         super().__init__()
-        self.setWindowTitle("Budget tracker") #Title of the window
+        #Setting up DB for MainWindow
+        self.db = db
 
-        #Setting uo the icon of the window
+        #Title of the window
+        self.setWindowTitle("Budget tracker") 
+
+        #Setting up the icon of the window
         basedir = os.path.dirname(os.path.abspath(__file__)) #getting ABS icon path
         i_path = os.path.join(basedir, "money.png")
         self.setWindowIcon(QIcon(i_path)) #showing icon of the app
@@ -134,6 +139,15 @@ class MainWindow(QMainWindow):
             #History - screen
         self.history.back_button.clicked.connect(lambda: self.stack.setCurrentIndex(0))
 
+        #connecting buttons
+            #Add transaction - Transaction window
+        self.transaction.send_button.clicked.connect(self.save_transaction)
+
+    def save_transaction(self):
+        date = self.transaction.date_text_box.toPlainText().strip()
+        description = self.transaction.descrition_text_box.toPlainText().strip()
+        amount = self.transaction.amount_text_box.toPlainText().strip()
+        self.db.add_transaction(date, description, amount)
         
 
 def main():
