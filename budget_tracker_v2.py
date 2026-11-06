@@ -36,17 +36,8 @@ class MainPage(QWidget):
         #Setting up DB
         self.db = db
 
-        #Getting amont money to spend in this month from month_bud
-        budget_left = self.db.month_budget_left("2026/11/01", "2026/14/12")
-
-        #Setting up two diffrents variants of text on main page
-        if budget_left < 0:
-            text_text_main_page = "You are out of budget this month..."
-        else:
-            text_text_main_page = f"You can spend this month {budget_left}Kč"
-
         #Setting up QLabel on main page + putting there one of the text varants
-        self.text_on_main_page = QLabel(text_text_main_page)
+        self.text_on_main_page = QLabel()
         self.text_on_main_page.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.text_on_main_page.setStyleSheet("font-size: 18px")
 
@@ -59,6 +50,15 @@ class MainPage(QWidget):
         layout.addWidget(self.text_on_main_page)
         layout.addWidget(self.add_transaction_button)
         layout.addWidget(self.history_button)
+
+        self.text_refresh()
+    def text_refresh(self): #Setting up two diffrents variants of text on main page
+        #Getting amount money to spend in this month from month_bud
+        budget_left = self.db.month_budget_left("2026-01-15", "2026-03-20")
+        if budget_left < 0:
+            self.text_on_main_page.setText("You are out of budget this month...")
+        else:
+            self.text_on_main_page.setText(f"You can spend this month {budget_left:,.2f}Kč")
        
 class History_window(QWidget): #Class for history window
     def __init__(self):
@@ -84,7 +84,7 @@ class Transaction_window(QWidget):
 
         #Adding text bar for date
         self.date_text_box = QTextEdit()
-        self.date_text_box.setPlaceholderText("Enter todays date in format M/D/Y")
+        self.date_text_box.setPlaceholderText("Enter todays date in format YY-MM-DD")
 
         #Adding text bar for description
         self.descrition_text_box = QTextEdit()
@@ -102,6 +102,7 @@ class Transaction_window(QWidget):
         layout.addWidget(self.descrition_text_box)
         layout.addWidget(self.send_button)
         layout.addWidget(self.back_button)
+
 class MainWindow(QMainWindow):
     def __init__(self, db):
         super().__init__()
@@ -142,6 +143,8 @@ class MainWindow(QMainWindow):
         #connecting buttons
             #Add transaction - Transaction window
         self.transaction.send_button.clicked.connect(self.save_transaction)
+            #Refreshing budget left text on main page
+        self.transaction.send_button.clicked.connect(self.main_page.text_refresh)
 
     def save_transaction(self):
         date = self.transaction.date_text_box.toPlainText().strip()
