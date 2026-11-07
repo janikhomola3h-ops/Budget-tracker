@@ -1,12 +1,16 @@
 import sqlite3
-from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QWidget, QVBoxLayout, QPushButton, QStackedWidget, QTextEdit
+from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QWidget, QVBoxLayout, QPushButton, QStackedWidget, QTextEdit, QListWidget
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
 import sys
 import os
+import datetime
 
 class Database(): #Database for tracker
     def __init__(self):
+        #Setting up datetime library in DB
+        self.datetime = datetime
+
         self.con = sqlite3.connect("budget_tracker.db")
         self.cur = self.con.cursor()
         self.cur.execute("""CREATE TABLE IF NOT EXISTS budget_tracker (date TEXT, category TEXT, amount REAL)""")
@@ -16,7 +20,32 @@ class Database(): #Database for tracker
         self.cur.execute("INSERT INTO budget_tracker (date, category, amount) VALUES (?, ?, ?)", (date,category,amount))
         self.con.commit()
 
-    def month_budget_left(self, start_date, end_date, month_budget = 500):
+    def month_budget_left(self, month_budget = 500):
+        #Getting current finance term
+        today_date = str(self.datetime.date.today())
+        year, month, day = map(int, today_date.split("-"))
+        print(year)
+        print(day)
+        print(month)
+        if day >= 15:
+            start_date = f"{year}-{month:02d}-15"
+            if month == 12:
+                month = 1
+                year = year + 1
+            else:
+                month += 1
+            end_date = f"{year}-{month:02d}-15"
+        else:
+            end_date = f"{year}-{month:02d}-15"
+            if month == 1:
+                month = 12
+                year -= 1
+            else:
+                month =- 1
+            start_date = f"{year}-{month:02d}-15"
+                    
+        
+        #Getting deposits/withdraws form DB
         self.cur.execute("SELECT SUM(amount) FROM budget_tracker WHERE date BETWEEN ? AND ?", (start_date, end_date))
         spend = self.cur.fetchone()[0]
         if spend is None:
@@ -54,7 +83,7 @@ class MainPage(QWidget):
         self.text_refresh()
     def text_refresh(self): #Setting up two diffrents variants of text on main page
         #Getting amount money to spend in this month from month_bud
-        budget_left = self.db.month_budget_left("2026-01-15", "2026-03-20")
+        budget_left = self.db.month_budget_left()
         if budget_left < 0:
             self.text_on_main_page.setText("You are out of budget this month...")
         else:
@@ -143,6 +172,8 @@ class MainWindow(QMainWindow):
         #connecting buttons
             #Add transaction - Transaction window
         self.transaction.send_button.clicked.connect(self.save_transaction)
+            #Going back to home screen after adding the transaction
+        self.transaction.send_button.clicked.connect(lambda: self.stack.setCurrentIndex(0))
             #Refreshing budget left text on main page
         self.transaction.send_button.clicked.connect(self.main_page.text_refresh)
 
