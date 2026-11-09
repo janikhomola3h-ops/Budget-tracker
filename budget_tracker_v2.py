@@ -1,5 +1,5 @@
 import sqlite3
-from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QWidget, QVBoxLayout, QPushButton, QStackedWidget, QTextEdit, QListWidget
+from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QWidget, QVBoxLayout, QPushButton, QStackedWidget, QTextEdit, QTableWidget
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
 import sys
@@ -24,34 +24,37 @@ class Database(): #Database for tracker
         #Getting current finance term
         today_date = str(self.datetime.date.today())
         year, month, day = map(int, today_date.split("-"))
-        print(year)
-        print(day)
-        print(month)
+        #decision progress using datetime library - reflecting swtiching years and month - starting finance term is 15 every month
         if day >= 15:
-            start_date = f"{year}-{month:02d}-15"
+            self.start_date = f"{year}-{month:02d}-15"
             if month == 12:
                 month = 1
                 year = year + 1
             else:
                 month += 1
-            end_date = f"{year}-{month:02d}-15"
+            self.end_date = f"{year}-{month:02d}-15"
         else:
-            end_date = f"{year}-{month:02d}-15"
+            self.end_date = f"{year}-{month:02d}-15"
             if month == 1:
                 month = 12
                 year -= 1
             else:
-                month =- 1
-            start_date = f"{year}-{month:02d}-15"
+                month -= 1
+            self.start_date = f"{year}-{month:02d}-15"
                     
         
         #Getting deposits/withdraws form DB
-        self.cur.execute("SELECT SUM(amount) FROM budget_tracker WHERE date BETWEEN ? AND ?", (start_date, end_date))
+        self.cur.execute("SELECT SUM(amount) FROM budget_tracker WHERE date BETWEEN ? AND ?", (self.start_date, self.end_date))
         spend = self.cur.fetchone()[0]
         if spend is None:
             spend = 0
         final_month_budget = month_budget + spend
         return final_month_budget
+
+    def count_of_results_in_term(self):
+        self.cur.execute("SELECT date, category, amount FROM budget_tracker WHERE date >= ? AND date < ?", (self.start_date, self.end_date))
+        result = self.cur.fetchall()
+        return result
 
 
 
@@ -90,14 +93,27 @@ class MainPage(QWidget):
             self.text_on_main_page.setText(f"You can spend this month {budget_left:,.2f}Kč")
        
 class History_window(QWidget): #Class for history window
-    def __init__(self):
+    def __init__(self, db):
         super().__init__()
+        #Setting up DB for History window
+        self.db = db
         #Layout
         layout = QVBoxLayout(self)
         #Adding button for returninh to the home screen
         self.back_button = QPushButton("Back")
 
+        #Getting numbers of rows in the table from DB
+        rows = self.db.count_of_results_in_term()
+        print(rows
+
+        #Creating table - edit later from 3 to variable
+        self.table = QTableWidget(3, 4)
+        self.table.setHorizontalHeaderLabels(["Amount", "Category", "Date", "Delete button"])
+
+
+
         #Adding componets to the layout
+        layout.addWidget(self.table)
         layout.addWidget(self.back_button)
 
 class Transaction_window(QWidget):
@@ -148,7 +164,7 @@ class MainWindow(QMainWindow):
 
         #Setting up main page on start
         self.main_page = MainPage(db)
-        self.history = History_window()
+        self.history = History_window(db)
         self.transaction = Transaction_window()
 
         #Creating stack of the pages + adding pages
