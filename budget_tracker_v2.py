@@ -1,5 +1,5 @@
 import sqlite3
-from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QWidget, QVBoxLayout, QPushButton, QStackedWidget, QTextEdit, QTableWidget
+from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QWidget, QVBoxLayout, QPushButton, QStackedWidget, QTextEdit, QTableWidget, QTableWidgetItem
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt
 import sys
@@ -102,19 +102,32 @@ class History_window(QWidget): #Class for history window
         #Adding button for returninh to the home screen
         self.back_button = QPushButton("Back")
 
-        #Getting numbers of rows in the table from DB
-        rows = self.db.count_of_results_in_term()
-        print(rows
-
-        #Creating table - edit later from 3 to variable
-        self.table = QTableWidget(3, 4)
+        #Creating table - numbers of rows is made by function in DB and stored to varibale named "rows"
+        self.table = QTableWidget(0,4)
         self.table.setHorizontalHeaderLabels(["Amount", "Category", "Date", "Delete button"])
-
-
 
         #Adding componets to the layout
         layout.addWidget(self.table)
         layout.addWidget(self.back_button)
+
+    def refresh_table(self):
+        #Getting data from the DB
+        results = self.db.count_of_results_in_term()
+        rows = len(results) # counting numbers of records in current term
+
+        #Setting numbers of rows in the table
+        self.table.setRowCount(rows)
+
+        #Filling in the informatin form DB to the table
+        counter = 0
+
+        #For loop for get each record alone + putting in data to the table
+        for data in results:
+            self.table.setItem(counter, 0, QTableWidgetItem(str(data[2]))) #Adding amount to the table (row, collum, date)
+            self.table.setItem(counter, 1, QTableWidgetItem(data[1]))
+            self.table.setItem(counter, 2, QTableWidgetItem(data[0]))
+            counter += 1
+                
 
 class Transaction_window(QWidget):
     def __init__(self):
@@ -192,6 +205,8 @@ class MainWindow(QMainWindow):
         self.transaction.send_button.clicked.connect(lambda: self.stack.setCurrentIndex(0))
             #Refreshing budget left text on main page
         self.transaction.send_button.clicked.connect(self.main_page.text_refresh)
+            #refreshing table in History window after each reopen the History of transaction
+        self.main_page.history_button.clicked.connect(self.history.refresh_table)
 
     def save_transaction(self):
         date = self.transaction.date_text_box.toPlainText().strip()
