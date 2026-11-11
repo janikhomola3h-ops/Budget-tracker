@@ -52,9 +52,13 @@ class Database(): #Database for tracker
         return final_month_budget
 
     def count_of_results_in_term(self):
-        self.cur.execute("SELECT date, category, amount FROM budget_tracker WHERE date >= ? AND date < ?", (self.start_date, self.end_date))
+        self.cur.execute("SELECT rowid, date, category, amount FROM budget_tracker WHERE date >= ? AND date < ?", (self.start_date, self.end_date))
         result = self.cur.fetchall()
         return result
+
+    def delete_transaction(self, rowid):
+        self.cur.execute("DELETE FROM budget_tracker WHERE rowid = ?", (rowid,))
+        self.con.commit()
 
 
 
@@ -106,6 +110,8 @@ class History_window(QWidget): #Class for history window
         self.table = QTableWidget(0,4)
         self.table.setHorizontalHeaderLabels(["Amount", "Category", "Date", "Delete button"])
 
+
+
         #Adding componets to the layout
         layout.addWidget(self.table)
         layout.addWidget(self.back_button)
@@ -119,14 +125,27 @@ class History_window(QWidget): #Class for history window
         self.table.setRowCount(rows)
 
         #Filling in the informatin form DB to the table
-        counter = 0
+        self.counter = 0
 
         #For loop for get each record alone + putting in data to the table
         for data in results:
-            self.table.setItem(counter, 0, QTableWidgetItem(str(data[2]))) #Adding amount to the table (row, collum, date)
-            self.table.setItem(counter, 1, QTableWidgetItem(data[1]))
-            self.table.setItem(counter, 2, QTableWidgetItem(data[0]))
-            counter += 1
+            #Creating varable rowid - getted from DB
+            rowid = data[0]
+            print(rowid)
+            self.table.setItem(self.counter, 0, QTableWidgetItem(str(data[3]))) #Adding amount to the table (row, collum, date,del_button)
+            self.table.setItem(self.counter, 1, QTableWidgetItem(data[2]))
+            self.table.setItem(self.counter, 2, QTableWidgetItem(data[1]))
+
+            #Creating delete button
+            self.delete_button_history = QPushButton("Delete")
+            self.delete_button_history.clicked.connect(lambda checked, rid = rowid: self.delete_row(rid)) #Connecting each delete button in with specific rowid
+            self.table.setCellWidget(self.counter, 3, self.delete_button_history) #Putting del_button in to the cell
+            self.counter += 1
+
+    def delete_row(self, rowid):
+        self.db.delete_transaction(rowid)
+        self.refresh_table()
+
                 
 
 class Transaction_window(QWidget):
@@ -207,6 +226,8 @@ class MainWindow(QMainWindow):
         self.transaction.send_button.clicked.connect(self.main_page.text_refresh)
             #refreshing table in History window after each reopen the History of transaction
         self.main_page.history_button.clicked.connect(self.history.refresh_table)
+            
+        
 
     def save_transaction(self):
         date = self.transaction.date_text_box.toPlainText().strip()
