@@ -224,9 +224,10 @@ class MainWindow(QMainWindow):
         self.transaction.send_button.clicked.connect(lambda: self.stack.setCurrentIndex(0))
             #Refreshing budget left text on main page
         self.transaction.send_button.clicked.connect(self.main_page.text_refresh)
-            #refreshing table in History window after each reopen the History of transaction
+            #Refreshing table in History window after each reopen the History of transaction
         self.main_page.history_button.clicked.connect(self.history.refresh_table)
-            
+            # Refreshing text on main page after getting back from History window 
+        self.history.back_button.clicked.connect(self.main_page.text_refresh)            
         
 
     def save_transaction(self):
