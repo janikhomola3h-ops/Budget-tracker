@@ -33,5 +33,8 @@
         - Delete transaction - a function for deleting a specific record in the DB
 
 #### Error Handling
-
+    - will be added
 #### How to Run
+    - Firstly you have to download libraies form "requierements.txt"
+    - Then you just simply run python interpreter like in other python scripts("python budget_tracker.py")
+    - After this step you can use app like as you want

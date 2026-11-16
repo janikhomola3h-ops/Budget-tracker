@@ -1,10 +1,11 @@
 import sqlite3
 from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QWidget, QVBoxLayout, QPushButton, QStackedWidget, QTextEdit, QTableWidget, QTableWidgetItem
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 import sys
 import os
 import datetime
+import time
 
 class Database(): #Database for tracker
     def __init__(self):
@@ -180,6 +181,24 @@ class Transaction_window(QWidget):
         layout.addWidget(self.send_button)
         layout.addWidget(self.back_button)
 
+class ErrorWindow(QWidget): #window that shows after an error
+    def __init__(self):
+        super().__init__()
+        layout = QVBoxLayout(self)
+        Error_text = QLabel("Please enter amount as numbers...")
+        Error_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        layout.addWidget(Error_text)
+
+class SuccessfulTransaction(QWidget): #Window that shows after successfully ading transaction
+    def __init__(self):
+        super().__init__()
+        layout = QVBoxLayout(self)
+        suc_text = QLabel("Transaction added...")
+        suc_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        layout.addWidget(suc_text)
+
 class MainWindow(QMainWindow):
     def __init__(self, db):
         super().__init__()
@@ -198,12 +217,16 @@ class MainWindow(QMainWindow):
         self.main_page = MainPage(db)
         self.history = History_window(db)
         self.transaction = Transaction_window()
+        self.error_window = ErrorWindow()
+        self.successful_transaction = SuccessfulTransaction()
 
         #Creating stack of the pages + adding pages
         self.stack = QStackedWidget()
-        self.stack.addWidget(self.main_page)
-        self.stack.addWidget(self.history)
-        self.stack.addWidget(self.transaction)
+        self.stack.addWidget(self.main_page) #0
+        self.stack.addWidget(self.history) #1
+        self.stack.addWidget(self.transaction) #2
+        self.stack.addWidget(self.error_window) #3
+        self.stack.addWidget(self.successful_transaction) #4
         self.setCentralWidget(self.stack)
 
 
@@ -220,8 +243,6 @@ class MainWindow(QMainWindow):
         #connecting buttons
             #Add transaction - Transaction window
         self.transaction.send_button.clicked.connect(self.save_transaction)
-            #Going back to home screen after adding the transaction
-        self.transaction.send_button.clicked.connect(lambda: self.stack.setCurrentIndex(0))
             #Refreshing budget left text on main page
         self.transaction.send_button.clicked.connect(self.main_page.text_refresh)
             #Refreshing table in History window after each reopen the History of transaction
@@ -230,11 +251,25 @@ class MainWindow(QMainWindow):
         self.history.back_button.clicked.connect(self.main_page.text_refresh)            
         
 
-    def save_transaction(self):
-        date = self.transaction.date_text_box.toPlainText().strip()
-        description = self.transaction.descrition_text_box.toPlainText().strip()
-        amount = self.transaction.amount_text_box.toPlainText().strip()
-        self.db.add_transaction(date, description, amount)
+    def save_transaction(self): #testing + handling data form user
+        try: #Testing if data in amount is an integer
+            test_amount = int(self.transaction.amount_text_box.toPlainText().strip())
+
+
+        except(ValueError):
+            #Showing error window
+            self.stack.setCurrentIndex(3)
+            QTimer.singleShot(3000, lambda: self.stack.setCurrentIndex(2))
+        else:
+            date = self.transaction.date_text_box.toPlainText().strip()
+            description = self.transaction.descrition_text_box.toPlainText().strip()
+            amount = self.transaction.amount_text_box.toPlainText().strip()
+            self.db.add_transaction(date, description, amount)
+
+            #Showing window about successfull transaction
+            self.stack.setCurrentIndex(4)
+            QTimer.singleShot(3000, lambda: self.stack.setCurrentIndex(0))
+
         
 
 def main():
